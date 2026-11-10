@@ -1,0 +1,13 @@
+
+{
+  "name": "nexora-sports",
+  "version": "4.8.0",
+  "private": true,
+  "description": "NEXORA SPORTS",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
