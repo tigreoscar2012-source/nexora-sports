@@ -55,10 +55,12 @@ const server = http.createServer(async (req, res) => {
     }
   }
 
-  res.writeHead(200, {
-    "Content-Type": "text/plain; charset=utf-8"
-  });
-  res.end("NEXORA SPORTS - servidor activo");
+ 
+res.writeHead(200, {
+  "Content-Type": "text/plain; charset=utf-8"
+});
+res.end("NEXORA SPORTS - servidor activo");
+ 
 });
 
 server.listen(PORT, "0.0.0.0");
