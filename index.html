@@ -1,0 +1,319 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport"
+content="width=device-width, initial-scale=1">
+<title>NEXORA SPORTS 4.8</title>
+<style>
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: #090b10;
+  color: white;
+  font-family: Arial, sans-serif;
+}
+
+header {
+  padding: 25px 18px;
+  text-align: center;
+  border-bottom: 1px solid #b68b35;
+}
+
+h1 {
+  color: #e6b94e;
+  margin-bottom: 5px;
+}
+
+main {
+  max-width: 750px;
+  margin: auto;
+  padding: 18px;
+}
+
+.panel {
+  background: #171b25;
+  padding: 18px;
+  border-radius: 15px;
+  margin-bottom: 18px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 9px;
+}
+
+button {
+  padding: 13px 8px;
+  border: 1px solid #a98743;
+  background: #252b36;
+  color: white;
+  border-radius: 9px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+button.active, .gold {
+  background: #d9ab49;
+  color: #101010;
+}
+
+.filters {
+  display: flex;
+  gap: 10px;
+  margin: 15px 0;
+}
+
+.filters button {
+  flex: 1;
+}
+
+.match {
+  padding: 14px 0;
+  border-bottom: 1px solid #343943;
+}
+
+small, .muted {
+  color: #b8bac2;
+}
+
+input {
+  width: 100%;
+  padding: 10px;
+  margin: 8px 0;
+  background: #10141c;
+  border: 1px solid #a98743;
+  color: white;
+  border-radius: 8px;
+}
+
+#analysis { display: none; }
+</style>
+</head>
+
+<body>
+<header>
+  <small>NEXORA CAPITAL</small>
+  <h1>NEXORA SPORTS</h1>
+  <p>Calendario deportivo • Versión 4.8</p>
+</header>
+
+<main>
+<section class="panel">
+  <h3>Selecciona una liga</h3>
+  <div class="grid" id="leagues"></div>
+
+  <h3>Próximos partidos</h3>
+  <div class="filters">
+    <button id="d7" class="active"
+      onclick="changeDays(7)">7 días</button>
+    <button id="d14"
+      onclick="changeDays(14)">14 días</button>
+  </div>
+
+  <button class="gold"
+    onclick="loadMatches()">
+    Actualizar partidos reales
+  </button>
+
+  <p id="status" class="muted">
+    Selecciona una liga para consultar.
+  </p>
+  <div id="matches"></div>
+</section>
+
+<section class="panel" id="analysis">
+  <h3>Análisis NEXORA AI</h3>
+  <p id="selectedMatch"></p>
+
+  <small>
+    Simulación experimental.
+    No es un pronóstico validado.
+  </small>
+
+  <p>Goles esperados local</p>
+  <input id="homeGoals"
+    type="number" value="1.4"
+    min="0" max="8" step="0.1">
+
+  <p>Goles esperados visitante</p>
+  <input id="awayGoals"
+    type="number" value="1.1"
+    min="0" max="8" step="0.1">
+
+  <button class="gold"
+    onclick="calculate()">
+    Calcular probabilidades
+  </button>
+
+  <p id="result"></p>
+</section>
+</main>
+
+<script>
+const leagues = {
+  premier: "Premier League",
+  seriea: "Serie A",
+  laliga: "La Liga",
+  bundesliga: "Bundesliga",
+  eredivisie: "Eredivisie"
+};
+
+let league = "premier";
+let days = 7;
+let selected = "";
+
+const $ = id => document.getElementById(id);
+
+function renderLeagues() {
+  $("leagues").innerHTML = "";
+
+  Object.entries(leagues).forEach(([id, name]) => {
+    const btn = document.createElement("button");
+    btn.textContent = name;
+    btn.className = league === id ? "active" : "";
+    btn.onclick = () => {
+      league = id;
+      renderLeagues();
+      loadMatches();
+    };
+    $("leagues").appendChild(btn);
+  });
+}
+
+function changeDays(value) {
+  days = value;
+  $("d7").className = days === 7 ? "active" : "";
+  $("d14").className = days === 14 ? "active" : "";
+  loadMatches();
+}
+
+async function loadMatches() {
+  $("status").textContent = "Consultando partidos...";
+  $("matches").innerHTML = "";
+  $("analysis").style.display = "none";
+
+  try {
+    const response = await fetch(
+      "/api/matches?league=" + league +
+      "&days=" + days
+    );
+
+    if (!response.ok) {
+      throw new Error("Servidor no disponible");
+    }
+
+    const data = await response.json();
+    const events = data.events || [];
+
+    if (!events.length) {
+      $("status").textContent =
+        "No se recibieron partidos para este período.";
+      return;
+    }
+
+    $("status").textContent =
+      events.length + " eventos recibidos.";
+
+    const now = new Date();
+    const end = new Date(now);
+    end.setDate(end.getDate() + days);
+
+    events.forEach(event => {
+      const date = new Date(event.date);
+
+      if (isNaN(date) || date < now || date > end) {
+        return;
+      }
+
+      const competition = event.competitions?.[0];
+      const teams = competition?.competitors || [];
+
+      const home = teams.find(
+        t => t.homeAway === "home"
+      )?.team?.displayName || "Local";
+
+      const away = teams.find(
+        t => t.homeAway === "away"
+      )?.team?.displayName || "Visitante";
+
+      const div = document.createElement("div");
+      div.className = "match";
+
+      const time = document.createElement("small");
+      time.textContent = date.toLocaleString("es");
+
+      const title = document.createElement("h3");
+      title.textContent = home + " vs " + away;
+
+      const btn = document.createElement("button");
+      btn.textContent = "Analizar partido";
+      btn.onclick = () => {
+        selected = home + " vs " + away;
+        $("selectedMatch").textContent = selected;
+        $("analysis").style.display = "block";
+        $("result").textContent = "";
+        $("analysis").scrollIntoView({
+          behavior: "smooth"
+        });
+      };
+
+      div.append(time, title, btn);
+      $("matches").appendChild(div);
+    });
+
+    if (!$("matches").children.length) {
+      $("status").textContent =
+        "No hay partidos próximos en este período.";
+    }
+  } catch (error) {
+    $("status").textContent =
+      "Error de conexión. Comprueba que " +
+      "NEXORA esté publicado en el servidor.";
+  }
+}
+
+function poisson(k, lambda) {
+  let p = Math.exp(-lambda);
+  for (let i = 1; i <= k; i++) {
+    p *= lambda / i;
+  }
+  return p;
+}
+
+function calculate() {
+  const a = Number($("homeGoals").value);
+  const b = Number($("awayGoals").value);
+
+  if (!Number.isFinite(a) ||
+      !Number.isFinite(b) ||
+      a < 0 || b < 0 || a > 8 || b > 8) {
+    $("result").textContent =
+      "Introduce valores entre 0 y 8.";
+    return;
+  }
+
+  let home = 0, draw = 0, away = 0;
+
+  for (let i = 0; i <= 35; i++) {
+    for (let j = 0; j <= 35; j++) {
+      const p = poisson(i, a) * poisson(j, b);
+      if (i > j) home += p;
+      else if (i === j) draw += p;
+      else away += p;
+    }
+  }
+
+  $("result").textContent =
+    "Local: " + (home * 100).toFixed(1) +
+    "% | Empate: " + (draw * 100).toFixed(1) +
+    "% | Visitante: " + (away * 100).toFixed(1) + "%";
+}
+
+renderLeagues();
+</script>
+</body>
+</html>
