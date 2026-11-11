@@ -73,8 +73,9 @@ fs.readFile(filePath, (error, html) => {
     "Content-Type": "text/html; charset=utf-8"
   });
 
-  res.end(html);
+    res.end(html);
 });
-  
+
+});
 
 server.listen(PORT, "0.0.0.0");
