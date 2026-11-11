@@ -45,6 +45,9 @@ const server = http.createServer(async (req, res) => {
         events: data.events || []
       }));
     } catch (error) {
+      
+console.error("ERROR ESPN:", error);
+      
       res.writeHead(502, {
         "Content-Type": "application/json"
       });
