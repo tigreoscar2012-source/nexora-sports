@@ -29,7 +29,9 @@ const server = http.createServer(async (req, res) => {
 
       const format = d => d.toISOString().slice(0, 10).replace(/-/g, "");
 
-      const api = `https://site.api.espn.com/apis/site/v2/sports/soccer/${leagues[league]}/scoreboard?dates=${format(today)}-${format(end)}&limit=200`;
+      
+const api = `https://site.api.espn.com/apis/site/v2/sports/soccer/${leagues[league]}/scoreboard?dates=${format(today)}-${format(end)}`;
+      
 
       const response = await fetch(api);
 
