@@ -24,7 +24,7 @@ const server = http.createServer(async (req, res) => {
 
     try {
       
-      })
+      
 const today = new Date();
 const format = d =>
   d.toISOString().slice(0, 10).replace(/-/g, "");
@@ -88,7 +88,7 @@ console.error("ERROR ESPN:", error);
         error: "No se pudo consultar ESPN"
       }));
     }
-  }
+  
 
  
 
