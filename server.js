@@ -33,7 +33,11 @@ const server = http.createServer(async (req, res) => {
 
       const response = await fetch(api);
 
-      if (!response.ok) throw new Error("ESPN unavailable");
+      
+if (!response.ok) {
+  throw new Error(`ESPN HTTP ${response.status}: ${response.statusText}`);
+}
+      
 
       const data = await response.json();
 
