@@ -55,11 +55,26 @@ const server = http.createServer(async (req, res) => {
   }
 
  
-res.writeHead(200, {
-  "Content-Type": "text/plain; charset=utf-8"
+
+const fs = require("node:fs");
+const path = require("node:path");
+
+const filePath = path.join(__dirname, "index.html");
+
+fs.readFile(filePath, (error, html) => {
+  if (error) {
+    res.writeHead(500, {
+      "Content-Type": "text/plain; charset=utf-8"
+    });
+    return res.end("No se pudo cargar NEXORA CAPITAL");
+  }
+
+  res.writeHead(200, {
+    "Content-Type": "text/html; charset=utf-8"
+  });
+
+  res.end(html);
 });
-res.end("NEXORA SPORTS - servidor activo");
- 
-});
+  
 
 server.listen(PORT, "0.0.0.0");
