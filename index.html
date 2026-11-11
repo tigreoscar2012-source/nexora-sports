@@ -218,16 +218,14 @@ async function loadMatches() {
     $("status").textContent =
       events.length + " eventos recibidos.";
 
-    const now = new Date();
-    const end = new Date(now);
-    end.setDate(end.getDate() + days);
+    
+events.forEach(event => {
+  const date = new Date(event.date);
 
-    events.forEach(event => {
-      const date = new Date(event.date);
-
-      if (isNaN(date) || date < now || date > end) {
-        return;
-      }
+  if (Number.isNaN(date.getTime())) {
+    return;
+}
+  
 
       const competition = event.competitions?.[0];
       const teams = competition?.competitors || [];
