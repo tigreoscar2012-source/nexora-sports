@@ -23,35 +23,60 @@ const server = http.createServer(async (req, res) => {
     }
 
     try {
-      const today = new Date();
-      const end = new Date(today);
-      end.setUTCDate(end.getUTCDate() + days);
-
-      const format = d => d.toISOString().slice(0, 10).replace(/-/g, "");
-
       
+      })
+const today = new Date();
+const format = d =>
+  d.toISOString().slice(0, 10).replace(/-/g, "");
 
-const api = `https://site.api.espn.com/apis/site/v2/sports/soccer/${leagues[league]}/scoreboard`;
-      
-      
+const requests = [];
 
-      const response = await fetch(api);
+for (let i = 0; i < days; i++) {
+  const date = new Date(today);
+  date.setUTCDate(today.getUTCDate() + i);
 
-      
-if (!response.ok) {
-  throw new Error(`ESPN HTTP ${response.status}: ${response.statusText}`);
+  const api = `https://site.api.espn.com/apis/site/v2/sports/soccer/${leagues[league]}/scoreboard?dates=${format(date)}`;
+
+  requests.push(
+    fetch(api).then(async response => {
+      if (!response.ok) {
+        throw new Error(`ESPN HTTP ${response.status}`);
+      }
+      return response.json();
+    })
+  );
 }
-      
 
-      const data = await response.json();
+const results = await Promise.allSettled(requests);
+const eventsMap = new Map();
+let successfulDays = 0;
 
-      res.writeHead(200, {
-        "Content-Type": "application/json; charset=utf-8"
-      });
+for (const result of results) {
+  if (result.status === "fulfilled") {
+    successfulDays++;
 
-      return res.end(JSON.stringify({
-        events: data.events || []
-      }));
+    for (const event of result.value.events || []) {
+      eventsMap.set(event.id, event);
+    }
+  } else {
+    console.error("ERROR ESPN:", result.reason);
+  }
+}
+
+if (successfulDays === 0) {
+  throw new Error("Todas las consultas a ESPN fallaron");
+}
+
+const events = [...eventsMap.values()]
+  .filter(event => new Date(event.date) >= today)
+  .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+res.writeHead(200, {
+  "Content-Type": "application/json; charset=utf-8"
+});
+
+return res.end(JSON.stringify({ events }));
+    );
     } catch (error) {
       
 console.error("ERROR ESPN:", error);
